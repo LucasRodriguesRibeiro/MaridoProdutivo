@@ -112,11 +112,54 @@ const Sidebar = ({ activeTab, setActiveTab, setIsMenuOpen }: any) => {
   );
 };
 
+
+
+// --- Component: ActionSheet ---
+const ActionSheet = ({
+  isOpen,
+  onClose,
+  onEdit,
+  onDelete,
+  title
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  title: string;
+}) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[150] flex items-end justify-center sm:items-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl relative z-10 animate-in slide-in-from-bottom-10 fade-in duration-300">
+        <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-6" />
+        <h3 className="text-center font-black text-slate-900 text-lg mb-6 font-outfit uppercase">{title}</h3>
+        <div className="space-y-3">
+          <button onClick={() => { onEdit(); onClose(); }} className="w-full flex items-center justify-center gap-3 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 font-bold py-4 rounded-2xl transition-all">
+            <Pencil size={20} />
+            Editar
+          </button>
+          <button onClick={() => { onDelete(); onClose(); }} className="w-full flex items-center justify-center gap-3 bg-red-50 text-red-500 font-bold py-4 rounded-2xl transition-all hover:bg-red-100">
+            <Trash2 size={20} />
+            Excluir
+          </button>
+          <button onClick={onClose} className="w-full py-4 text-slate-400 font-bold text-sm uppercase tracking-widest mt-2">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- View: Tasks ---
 const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: React.Dispatch<React.SetStateAction<Task[]>>, onDelete: (id: string) => void }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', area: 'Trabalho' as LifeArea, deadline: '' });
   const [isAdding, setIsAdding] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [activeActionTaskId, setActiveActionTaskId] = useState<string | null>(null);
 
   const isOverdue = (deadline?: string) => {
     if (!deadline) return false;
@@ -148,24 +191,42 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
       return;
     }
 
-    const taskData = {
-      user_id: user.id,
-      title: title,
-      area: quickTitle ? 'Casa' : newTask.area,
-      deadline: quickTitle ? null : (newTask.deadline || null),
-      completed: false
-    };
+    if (editingTask) {
+      const { error } = await supabase
+        .from('marido_tasks')
+        .update({
+          title: title,
+          area: newTask.area,
+          deadline: newTask.deadline || null
+        })
+        .eq('id', editingTask.id);
 
-    const { data, error } = await supabase
-      .from('marido_tasks')
-      .insert([taskData])
-      .select()
-      .single();
+      if (!error) {
+        setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, title, area: newTask.area, deadline: newTask.deadline || null } : t));
+        setEditingTask(null);
+        setNewTask({ title: '', area: 'Trabalho', deadline: '' });
+        setShowAdd(false);
+      }
+    } else {
+      const taskData = {
+        user_id: user.id,
+        title: title,
+        area: quickTitle ? 'Casa' : newTask.area,
+        deadline: quickTitle ? null : (newTask.deadline || null),
+        completed: false
+      };
 
-    if (!error && data) {
-      setTasks([data, ...tasks]);
-      setNewTask({ title: '', area: 'Trabalho', deadline: '' });
-      setShowAdd(false);
+      const { data, error } = await supabase
+        .from('marido_tasks')
+        .insert([taskData])
+        .select()
+        .single();
+
+      if (!error && data) {
+        setTasks([data, ...tasks]);
+        setNewTask({ title: '', area: 'Trabalho', deadline: '' });
+        setShowAdd(false);
+      }
     }
     setIsAdding(false);
   };
@@ -214,7 +275,11 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
           </div>
         </div>
         <button
-          onClick={() => setShowAdd(true)}
+          onClick={() => {
+            setEditingTask(null);
+            setNewTask({ title: '', area: 'Trabalho', deadline: '' });
+            setShowAdd(true);
+          }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 h-14 rounded-2xl shadow-xl shadow-indigo-600/20 flex items-center gap-3 transition-all hover:scale-105 active:scale-95 group ml-auto md:ml-0 font-bold"
         >
           <Plus size={20} className="group-hover:rotate-90 transition-transform" />
@@ -282,7 +347,8 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
             return (
               <div
                 key={task.id}
-                className={`bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border transition-all duration-300 flex items-center gap-4 md:gap-5 shadow-sm hover:shadow-md hover:border-indigo-100 group relative overflow-hidden ${overdue ? 'border-red-100 bg-red-50/30' : 'border-slate-100'}`}
+                onClick={() => setActiveActionTaskId(task.id)}
+                className={`bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border transition-all duration-300 flex items-center gap-4 md:gap-5 shadow-sm hover:shadow-md hover:border-indigo-100 group relative overflow-hidden cursor-pointer ${overdue ? 'border-red-100 bg-red-50/30' : 'border-slate-100'}`}
               >
                 {/* Overdue Indicator Bar */}
                 {overdue && (
@@ -291,7 +357,7 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
 
                 {/* Custom Checkbox - Optimized Touch Target */}
                 <button
-                  onClick={() => toggleTask(task.id, task.completed)}
+                  onClick={(e) => { e.stopPropagation(); toggleTask(task.id, task.completed); }}
                   className={`h-11 w-11 rounded-xl border-2 shrink-0 flex items-center justify-center transition-all duration-500 ${overdue ? 'border-red-200 bg-white' : 'border-slate-200 hover:border-indigo-400 hover:scale-110 bg-white'}`}
                 >
                   <div className="h-5 w-5 rounded-full bg-indigo-600 scale-0 transition-transform group-active:scale-100" />
@@ -318,11 +384,10 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
                   )}
                 </div>
 
-                {/* Actions */}
-                {/* Actions - Visible on mobile swap/long press logic if needed, but keeping hover for desktop. Mobile actions could be swipe? For now, we allow them to show always on mobile or specific layout. */}
-                <div className="flex md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                {/* Desktop Actions */}
+                <div className="hidden md:flex opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={() => onDelete(task.id)}
+                    onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
                     className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
                     title="Excluir objetivo"
                   >
@@ -335,7 +400,22 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
         )}
       </div>
 
-      {/* Refined Modal Add Task */}
+      <ActionSheet
+        isOpen={!!activeActionTaskId}
+        onClose={() => setActiveActionTaskId(null)}
+        onEdit={() => {
+          const task = tasks.find(t => t.id === activeActionTaskId);
+          if (task) {
+            setEditingTask(task);
+            setNewTask({ title: task.title, area: task.area, deadline: task.deadline || '' });
+            setShowAdd(true);
+          }
+        }}
+        onDelete={() => { if (activeActionTaskId) onDelete(activeActionTaskId); }}
+        title="Gerenciar Objetivo"
+      />
+
+      {/* Refined Modal Add/Edit Task */}
       {showAdd && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-end sm:items-center justify-center p-4">
           <div className="bg-white w-full max-w-lg rounded-[32px] md:rounded-[48px] p-6 md:p-10 shadow-2xl animate-in slide-in-from-bottom-12 duration-500 relative overflow-hidden">
@@ -349,8 +429,8 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
                     <Plus size={24} strokeWidth={3} />
                   </div>
                   <div>
-                    <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight font-outfit uppercase">Novo Objetivo</h3>
-                    <p className="text-slate-500 text-sm font-medium">Defina seu próximo passo estratégico.</p>
+                    <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight font-outfit uppercase">{editingTask ? 'Editar Objetivo' : 'Novo Objetivo'}</h3>
+                    <p className="text-slate-500 text-sm font-medium">{editingTask ? 'Ajustar estratégia.' : 'Defina seu próximo passo estratégico.'}</p>
                   </div>
                 </div>
                 <button onClick={() => setShowAdd(false)} className="w-12 h-12 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-all hover:rotate-90">
@@ -418,7 +498,7 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
                       </>
                     ) : (
                       <>
-                        <span>Confirmar Objetivo</span>
+                        <span>{editingTask ? 'Salvar Alterações' : 'Confirmar Objetivo'}</span>
                         <Plus size={24} />
                       </>
                     )}
@@ -432,6 +512,7 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
     </div>
   );
 };
+
 
 // --- View: Planning ---
 const PlanningView = () => {
@@ -481,6 +562,7 @@ const PlanningView = () => {
   // --- Detail View State ---
   const [showItemForm, setShowItemForm] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [activeActionItemId, setActiveActionItemId] = useState<string | null>(null);
 
   const handleEditItem = (item: ScheduleItem) => {
     const [start, end] = item.time.split(' - ');
@@ -968,7 +1050,7 @@ const PlanningView = () => {
               </div>
 
               <div
-                onClick={() => toggleItemCompletion(item.id)}
+                onClick={() => setActiveActionItemId(item.id)}
                 className={`flex-1 p-5 md:p-8 rounded-[32px] md:rounded-[40px] border shadow-sm flex items-center gap-4 md:gap-6 cursor-pointer transition-all hover:shadow-md active:scale-[0.99] ${item.completed
                   ? 'bg-emerald-50/50 border-emerald-100'
                   : 'bg-white border-slate-50 hover:border-indigo-50'
@@ -984,11 +1066,13 @@ const PlanningView = () => {
                   <div className="hidden md:block text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Horário: {item.time}</div>
                 </div>
 
-                {/* Mobile Checkbox Visual */}
-                <div className={`md:hidden shrink-0 w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all ${item.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 text-transparent'
-                  }`}>
+                {/* Mobile Checkbox Visual - Now Interactive */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleItemCompletion(item.id); }}
+                  className={`md:hidden shrink-0 w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all ${item.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 text-transparent'
+                    }`}>
                   <CheckCircle2 size={20} />
-                </div>
+                </button>
 
                 {/* Actions */}
                 <div className="hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
@@ -1000,13 +1084,19 @@ const PlanningView = () => {
                   </button>
                 </div>
               </div>
-
-              {/* Mobile Actions (Outside card for better touch targets) */}
-              <div className="md:hidden flex flex-col gap-2 absolute right-0 top-1/2 -translate-y-1/2 translate-x-full pr-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                {/* Mobile specific logic if needed, but keeping simple for now */}
-              </div>
             </div>
           ))}
+
+          <ActionSheet
+            isOpen={!!activeActionItemId}
+            onClose={() => setActiveActionItemId(null)}
+            onEdit={() => {
+              const item = activePlan.items.find(i => i.id === activeActionItemId);
+              if (item) handleEditItem(item);
+            }}
+            onDelete={() => { if (activeActionItemId) handleDeleteItem(activeActionItemId); }}
+            title="Gerenciar Atividade"
+          />
         </div>
 
         <div className="mt-8 flex justify-center">
