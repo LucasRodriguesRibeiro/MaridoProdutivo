@@ -24,7 +24,8 @@ import {
   BrainCircuit,
   CheckCircle,
   Loader2,
-  ChevronDown
+  ChevronDown,
+  Pencil
 } from 'lucide-react';
 import { Task, LifeArea, RoutineEntry, ScheduleItem, DailyPlanning } from './types';
 import { transformTextToTask, transformTextToSchedule } from './services/geminiService';
@@ -482,6 +483,71 @@ const PlanningView = () => {
   const [newEndTime, setNewEndTime] = useState('');
   const [newActivity, setNewActivity] = useState('');
 
+  // --- Detail View State ---
+  const [showItemForm, setShowItemForm] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+
+  const handleEditItem = (item: ScheduleItem) => {
+    const [start, end] = item.time.split(' - ');
+    setNewStartTime(start);
+    setNewEndTime(end || '');
+    setNewActivity(item.task);
+    setEditingItemId(item.id);
+    setShowItemForm(true);
+  };
+
+  const handleAddItem = () => {
+    setNewStartTime('');
+    setNewEndTime('');
+    setNewActivity('');
+    setEditingItemId(null);
+    setShowItemForm(true);
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (!activePlan) return;
+    if (!confirm('Tem certeza que deseja remover este item?')) return;
+
+    const updatedItems = activePlan.items.filter(i => i.id !== itemId);
+    const updatedPlan = { ...activePlan, items: updatedItems };
+    setActivePlan(updatedPlan);
+    setPlans(prev => prev.map(p => p.id === activePlan.id ? updatedPlan : p));
+    await persistPlanItems(activePlan.id, updatedItems);
+  };
+
+  const handleSaveActiveItem = async () => {
+    if (!activePlan || !newStartTime || !newActivity) return;
+
+    const timeRange = newEndTime ? `${newStartTime} - ${newEndTime}` : newStartTime;
+    const newItem: ScheduleItem = {
+      id: editingItemId || Math.random().toString(36).substr(2, 9),
+      time: timeRange,
+      task: newActivity,
+      completed: editingItemId ? activePlan.items.find(i => i.id === editingItemId)?.completed || false : false
+    };
+
+    let updatedItems;
+    if (editingItemId) {
+      updatedItems = activePlan.items.map(i => i.id === editingItemId ? newItem : i);
+    } else {
+      updatedItems = [...activePlan.items, newItem];
+    }
+
+    // Sort by time
+    updatedItems.sort((a, b) => a.time.localeCompare(b.time));
+
+    const updatedPlan = { ...activePlan, items: updatedItems };
+    setActivePlan(updatedPlan);
+    setPlans(prev => prev.map(p => p.id === activePlan.id ? updatedPlan : p)); // Optimistically update list
+    await persistPlanItems(activePlan.id, updatedItems);
+
+    setShowItemForm(false);
+    setNewStartTime('');
+    setNewEndTime('');
+    setNewActivity('');
+    setEditingItemId(null);
+  };
+
   // Derived state for current view
   const createItems = dayDrafts[createDate] || [];
 
@@ -928,10 +994,93 @@ const PlanningView = () => {
                   }`}>
                   <CheckCircle2 size={14} />
                 </div>
+
+                {/* Actions */}
+                <div className="hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                  <button onClick={(e) => { e.stopPropagation(); handleEditItem(item); }} className="p-3 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all" title="Editar">
+                    <Pencil size={18} strokeWidth={2.5} />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); handleDeleteItem(item.id); }} className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all" title="Excluir">
+                    <Trash2 size={18} strokeWidth={2.5} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile Actions (Outside card for better touch targets) */}
+              <div className="md:hidden flex flex-col gap-2 absolute right-0 top-1/2 -translate-y-1/2 translate-x-full pr-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Mobile specific logic if needed, but keeping simple for now */}
               </div>
             </div>
           ))}
         </div>
+
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={handleAddItem}
+            className="group flex items-center gap-3 bg-white hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 px-6 py-4 rounded-[24px] font-black uppercase tracking-widest text-[10px] border border-slate-100 hover:border-indigo-200 transition-all shadow-sm hover:shadow-lg active:scale-95"
+          >
+            <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-indigo-600 text-slate-400 group-hover:text-white flex items-center justify-center transition-all">
+              <Plus size={16} strokeWidth={3} />
+            </div>
+            Adicionar Atividade
+          </button>
+        </div>
+
+        {/* Modal/Form for Adding/Editing */}
+        {showItemForm && (
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div onClick={() => setShowItemForm(false)} className="absolute inset-0" />
+            <div className="bg-white rounded-[48px] p-8 w-full max-w-lg shadow-2xl animate-in slide-in-from-bottom-10 relative z-10">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight font-outfit">{editingItemId ? 'Editar Atividade' : 'Nova Atividade'}</h3>
+                <button onClick={() => setShowItemForm(false)} className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-2xl transition-all"><X size={20} /></button>
+              </div>
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={newStartTime}
+                      onChange={e => setNewStartTime(e.target.value)}
+                      className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl p-4 font-bold text-slate-900 outline-none transition-all"
+                    />
+                    <span className="absolute -top-2 left-4 px-2 bg-white text-[9px] font-black text-indigo-500 uppercase tracking-widest">Início</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={newEndTime}
+                      onChange={e => setNewEndTime(e.target.value)}
+                      className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl p-4 font-bold text-slate-900 outline-none transition-all"
+                    />
+                    <span className="absolute -top-2 left-4 px-2 bg-white text-[9px] font-black text-indigo-500 uppercase tracking-widest">Fim</span>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newActivity}
+                    onChange={e => setNewActivity(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSaveActiveItem()}
+                    placeholder="Ex: Leitura da Bíblia"
+                    className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl p-4 font-bold text-slate-900 outline-none transition-all"
+                    autoFocus
+                  />
+                  <span className="absolute -top-2 left-4 px-2 bg-white text-[9px] font-black text-indigo-500 uppercase tracking-widest">Atividade</span>
+                </div>
+
+                <button
+                  onClick={handleSaveActiveItem}
+                  disabled={!newStartTime || !newActivity}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 rounded-[24px] uppercase tracking-widest text-xs transition-all shadow-xl shadow-indigo-200 active:scale-95 disabled:opacity-50"
+                >
+                  Salvar Alterações
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-20 text-center">
           <button
