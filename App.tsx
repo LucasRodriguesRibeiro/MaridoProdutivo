@@ -202,9 +202,9 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
             <ClipboardList size={28} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight font-outfit uppercase">Lista de Ação</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight font-outfit uppercase">Lista de Ação</h2>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-slate-500 font-medium">{pendingTasks.length} frentes pendentes</span>
+              <span className="text-slate-500 font-medium text-sm">{pendingTasks.length} frentes pendentes</span>
               {overdueCount > 0 && (
                 <span className="flex items-center gap-1 text-red-500 font-bold text-[10px] uppercase tracking-wider bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
                   {overdueCount} em atraso
@@ -244,7 +244,7 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
           <input
             type="text"
             placeholder="No que vamos focar agora? (Pressione Enter)"
-            className="w-full bg-white border-2 border-slate-100 rounded-[28px] pl-14 pr-24 h-16 text-slate-700 font-bold placeholder:text-slate-300 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-sm"
+            className="w-full bg-white border-2 border-slate-100 rounded-[28px] pl-12 md:pl-14 pr-24 h-14 md:h-16 text-slate-700 font-bold text-base md:text-lg placeholder:text-slate-300 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-sm"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 addTask(undefined, e.currentTarget.value);
@@ -252,7 +252,7 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
               }
             }}
           />
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors">
+          <div className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors">
             <Plus size={24} />
           </div>
           <div className="absolute right-5 top-1/2 -translate-y-1/2">
@@ -282,19 +282,19 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
             return (
               <div
                 key={task.id}
-                className={`bg-white p-6 rounded-[32px] border transition-all duration-300 flex items-center gap-5 shadow-sm hover:shadow-md hover:border-indigo-100 group relative overflow-hidden ${overdue ? 'border-red-100 bg-red-50/30' : 'border-slate-100'}`}
+                className={`bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border transition-all duration-300 flex items-center gap-4 md:gap-5 shadow-sm hover:shadow-md hover:border-indigo-100 group relative overflow-hidden ${overdue ? 'border-red-100 bg-red-50/30' : 'border-slate-100'}`}
               >
                 {/* Overdue Indicator Bar */}
                 {overdue && (
                   <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500" />
                 )}
 
-                {/* Custom Checkbox */}
+                {/* Custom Checkbox - Optimized Touch Target */}
                 <button
                   onClick={() => toggleTask(task.id, task.completed)}
-                  className={`h-8 w-8 rounded-xl border-2 shrink-0 flex items-center justify-center transition-all duration-500 ${overdue ? 'border-red-200 bg-white' : 'border-slate-200 hover:border-indigo-400 hover:scale-110 bg-white'}`}
+                  className={`h-11 w-11 rounded-xl border-2 shrink-0 flex items-center justify-center transition-all duration-500 ${overdue ? 'border-red-200 bg-white' : 'border-slate-200 hover:border-indigo-400 hover:scale-110 bg-white'}`}
                 >
-                  <div className="h-4 w-4 rounded-full bg-indigo-600 scale-0 transition-transform group-active:scale-100" />
+                  <div className="h-5 w-5 rounded-full bg-indigo-600 scale-0 transition-transform group-active:scale-100" />
                 </button>
 
                 {/* Content */}
@@ -305,7 +305,7 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
                       {task.area}
                     </span>
                   </div>
-                  <h3 className={`font-bold text-lg leading-tight tracking-tight mb-1 transition-colors ${overdue ? 'text-red-900' : 'text-slate-800'}`}>
+                  <h3 className={`font-bold text-base md:text-lg leading-snug tracking-tight mb-1 transition-colors ${overdue ? 'text-red-900' : 'text-slate-800'}`}>
                     {task.title}
                   </h3>
                   {task.deadline && (
@@ -319,19 +319,14 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Actions - Visible on mobile swap/long press logic if needed, but keeping hover for desktop. Mobile actions could be swipe? For now, we allow them to show always on mobile or specific layout. */}
+                <div className="flex md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => onDelete(task.id)}
                     className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
                     title="Excluir objetivo"
                   >
                     <Trash2 size={20} />
-                  </button>
-                  <button
-                    onClick={() => toggleTask(task.id, task.completed)}
-                    className="p-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest px-4"
-                  >
-                    Feito
                   </button>
                 </div>
               </div>
@@ -343,7 +338,7 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
       {/* Refined Modal Add Task */}
       {showAdd && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-[48px] p-10 shadow-2xl animate-in slide-in-from-bottom-12 duration-500 relative overflow-hidden">
+          <div className="bg-white w-full max-w-lg rounded-[32px] md:rounded-[48px] p-6 md:p-10 shadow-2xl animate-in slide-in-from-bottom-12 duration-500 relative overflow-hidden">
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50" />
 
@@ -354,7 +349,7 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
                     <Plus size={24} strokeWidth={3} />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight font-outfit uppercase">Novo Objetivo</h3>
+                    <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight font-outfit uppercase">Novo Objetivo</h3>
                     <p className="text-slate-500 text-sm font-medium">Defina seu próximo passo estratégico.</p>
                   </div>
                 </div>
@@ -369,7 +364,7 @@ const TasksView = ({ tasks, setTasks, onDelete }: { tasks: Task[], setTasks: Rea
                   <input
                     autoFocus
                     required
-                    className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-3xl p-5 text-lg font-bold text-slate-800 placeholder:text-slate-300 transition-all outline-none"
+                    className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-3xl p-4 md:p-5 text-lg font-bold text-slate-800 placeholder:text-slate-300 transition-all outline-none"
                     value={newTask.title}
                     onChange={e => setNewTask({ ...newTask, title: e.target.value })}
                     placeholder="Ex: Definir orçamento familiar mensal"
@@ -679,7 +674,7 @@ const PlanningView = () => {
       <div className="view-enter max-w-4xl mx-auto pb-32">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
           <div className="space-y-2">
-            <h2 className="text-5xl font-black text-slate-900 tracking-tight font-outfit uppercase leading-none">
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight font-outfit uppercase leading-none">
               Meus <span className="text-indigo-600">Cronogramas</span>
             </h2>
             <p className="text-slate-500 font-medium text-lg">Histórico de planejamento estratégico.</p>
@@ -711,7 +706,7 @@ const PlanningView = () => {
               <div
                 key={p.id}
                 onClick={() => { setActivePlan(p); setViewMode('detail'); }}
-                className="bg-white p-8 rounded-[48px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-indigo-100 transition-all group cursor-pointer relative overflow-hidden"
+                className="bg-white p-6 md:p-8 rounded-[32px] md:rounded-[48px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-indigo-100 transition-all group cursor-pointer relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="bg-slate-50 p-3 rounded-2xl group-hover:bg-indigo-50 transition-colors">
@@ -771,7 +766,7 @@ const PlanningView = () => {
             <div className="relative z-50">
               <button
                 onClick={() => setShowDateSelector(!showDateSelector)}
-                className="w-full bg-white p-10 rounded-[56px] border border-slate-100 shadow-xl shadow-slate-200/20 text-left relative group hover:border-indigo-200 transition-all active:scale-[0.99] active:shadow-sm"
+                className="w-full bg-white p-6 md:p-10 rounded-[40px] md:rounded-[56px] border border-slate-100 shadow-xl shadow-slate-200/20 text-left relative group hover:border-indigo-200 transition-all active:scale-[0.99] active:shadow-sm"
               >
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 group-hover:text-indigo-500 transition-colors pointer-events-none">
                   Data do Cronograma
@@ -827,7 +822,7 @@ const PlanningView = () => {
               )}
             </div>
 
-            <div className="bg-white p-10 rounded-[56px] border border-slate-100 shadow-xl shadow-slate-200/20">
+            <div className="bg-white p-6 md:p-10 rounded-[40px] md:rounded-[56px] border border-slate-100 shadow-xl shadow-slate-200/20">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">O que vou fazer</h3>
 
               <div className="space-y-6">
@@ -876,7 +871,7 @@ const PlanningView = () => {
 
           {/* Right Column: Preview */}
           <div className="lg:col-span-7">
-            <div className="bg-slate-900 rounded-[56px] p-10 min-h-[600px] flex flex-col shadow-2xl">
+            <div className="bg-slate-900 rounded-[40px] md:rounded-[56px] p-6 md:p-10 min-h-[400px] md:min-h-[600px] flex flex-col shadow-2xl">
               <div className="flex items-center justify-between mb-10">
                 <h3 className="text-indigo-400 font-black text-[10px] uppercase tracking-[0.3em]">Pré-visualização</h3>
                 <span className="text-white/40 text-[9px] font-black uppercase tracking-widest">{createItems.length} ITENS</span>
@@ -974,7 +969,7 @@ const PlanningView = () => {
 
               <div
                 onClick={() => toggleItemCompletion(item.id)}
-                className={`flex-1 p-8 rounded-[40px] border shadow-sm flex items-center gap-6 cursor-pointer transition-all hover:shadow-md active:scale-[0.99] ${item.completed
+                className={`flex-1 p-5 md:p-8 rounded-[32px] md:rounded-[40px] border shadow-sm flex items-center gap-4 md:gap-6 cursor-pointer transition-all hover:shadow-md active:scale-[0.99] ${item.completed
                   ? 'bg-emerald-50/50 border-emerald-100'
                   : 'bg-white border-slate-50 hover:border-indigo-50'
                   }`}
@@ -985,14 +980,14 @@ const PlanningView = () => {
                     <span className={`text-[10px] font-black uppercase tracking-widest ${item.completed ? 'text-emerald-600' : 'text-indigo-500'}`}>{item.time}</span>
                     {item.completed && <CheckCircle2 size={14} className="text-emerald-500" />}
                   </div>
-                  <h4 className={`text-xl font-black tracking-tight leading-tight transition-all ${item.completed ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-900'}`}>{item.task}</h4>
+                  <h4 className={`text-lg md:text-xl font-black tracking-tight leading-tight transition-all ${item.completed ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-900'}`}>{item.task}</h4>
                   <div className="hidden md:block text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Horário: {item.time}</div>
                 </div>
 
                 {/* Mobile Checkbox Visual */}
-                <div className={`md:hidden w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${item.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 text-transparent'
+                <div className={`md:hidden shrink-0 w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all ${item.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 text-transparent'
                   }`}>
-                  <CheckCircle2 size={14} />
+                  <CheckCircle2 size={20} />
                 </div>
 
                 {/* Actions */}
@@ -1030,7 +1025,8 @@ const PlanningView = () => {
         {showItemForm && (
           <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div onClick={() => setShowItemForm(false)} className="absolute inset-0" />
-            <div className="bg-white rounded-[48px] p-8 w-full max-w-lg shadow-2xl animate-in slide-in-from-bottom-10 relative z-10">
+            <div onClick={() => setShowItemForm(false)} className="absolute inset-0" />
+            <div className="bg-white rounded-[32px] md:rounded-[48px] p-6 md:p-8 w-full max-w-lg shadow-2xl animate-in slide-in-from-bottom-10 relative z-10">
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight font-outfit">{editingItemId ? 'Editar Atividade' : 'Nova Atividade'}</h3>
                 <button onClick={() => setShowItemForm(false)} className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-2xl transition-all"><X size={20} /></button>
@@ -1174,7 +1170,7 @@ const RoutineView = () => {
   return (
     <div className="view-enter">
       <div className="mb-10">
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Minha Base</h2>
+        <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Minha Base</h2>
         <p className="text-slate-500 font-medium">O que você já cuidou hoje? Pequenas vitórias diárias.</p>
       </div>
 
@@ -1210,23 +1206,23 @@ const RoutineView = () => {
             <button
               key={item.key}
               onClick={() => toggle(item.key as any)}
-              className={`w-full flex items-center gap-5 p-5 pr-6 rounded-[32px] border transition-all duration-300 group relative overflow-hidden ${isDone
+              className={`w-full flex items-center gap-4 md:gap-5 p-4 md:p-5 pr-6 rounded-[24px] md:rounded-[32px] border transition-all duration-300 group relative overflow-hidden ${isDone
                 ? 'bg-white border-indigo-100 shadow-md translate-x-1'
                 : 'bg-white border-slate-100 hover:border-indigo-100 hover:shadow-sm'
                 }`}
             >
-              <div className={`p-3.5 rounded-2xl transition-all duration-500 ${isDone ? 'bg-indigo-600 text-white scale-110 shadow-lg shadow-indigo-600/20' : 'bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'}`}>
+              <div className={`p-3 md:p-3.5 rounded-2xl transition-all duration-500 ${isDone ? 'bg-indigo-600 text-white scale-110 shadow-lg shadow-indigo-600/20' : 'bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'}`}>
                 <item.icon size={24} strokeWidth={2.5} />
               </div>
               <div className="flex-1 text-left min-w-0">
-                <span className={`block font-bold text-lg leading-tight transition-colors ${isDone ? 'text-indigo-950' : 'text-slate-700'}`}>
+                <span className={`block font-bold text-base md:text-lg leading-tight transition-colors ${isDone ? 'text-indigo-950' : 'text-slate-700'}`}>
                   {item.label}
                 </span>
                 <span className={`block text-xs font-medium mt-0.5 transition-colors ${isDone ? 'text-indigo-400' : 'text-slate-400'}`}>
                   {item.sub}
                 </span>
               </div>
-              <div className={`h-8 w-8 rounded-xl border-2 flex items-center justify-center transition-all duration-500 shrink-0 ${isDone
+              <div className={`h-11 w-11 rounded-xl border-2 flex items-center justify-center transition-all duration-500 shrink-0 ${isDone
                 ? 'bg-emerald-500 border-emerald-500 text-white rotate-0'
                 : 'border-slate-100 rotate-[-15deg] group-hover:rotate-0'
                 }`}>
@@ -1261,8 +1257,8 @@ const HistoryView = ({ tasks, onDelete }: { tasks: Task[], onDelete: (id: string
             <CheckCircle size={28} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight font-outfit uppercase">Vitórias</h2>
-            <p className="text-slate-500 font-medium mt-1">Celebrando seu progresso e constância.</p>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight font-outfit uppercase">Vitórias</h2>
+            <p className="text-slate-500 font-medium mt-1">Celebrando seu progresso.</p>
           </div>
         </div>
       </div>
@@ -1289,8 +1285,8 @@ const HistoryView = ({ tasks, onDelete }: { tasks: Task[], onDelete: (id: string
           </div>
         ) : (
           completedTasks.map(task => (
-            <div key={task.id} className="bg-white p-6 rounded-[32px] border border-slate-100 flex items-center gap-5 group hover:shadow-md transition-all">
-              <div className="text-emerald-500 bg-emerald-50 w-12 h-12 rounded-2xl flex items-center justify-center shrink-0">
+            <div key={task.id} className="bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-100 flex items-center gap-4 md:gap-5 group hover:shadow-md transition-all">
+              <div className="text-emerald-500 bg-emerald-50 w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center shrink-0">
                 <CheckCircle2 size={24} strokeWidth={3} />
               </div>
               <div className="flex-1 min-w-0">
@@ -1426,7 +1422,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 md:p-10 lg:p-16 pt-24 md:pt-16 max-w-5xl mx-auto w-full pb-28 md:pb-16 transition-all">
+      <main className="flex-1 p-4 md:p-10 lg:p-16 pt-24 md:pt-16 max-w-5xl mx-auto w-full pb-32 md:pb-16 transition-all">
         <div className="view-enter">
           {activeTab === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} onDelete={deleteTask} />}
           {activeTab === 'planning' && <PlanningView setTasks={setTasks} />}
@@ -1435,7 +1431,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Persistent Mobile Bottom Nav - REFINED */}
-        <nav className="md:hidden fixed bottom-6 left-6 right-6 h-18 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl flex items-center justify-around px-4 z-40 overflow-hidden">
+        <nav className="md:hidden fixed bottom-4 left-4 right-4 h-[72px] bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-2xl flex items-center justify-around px-2 z-50 overflow-hidden supports-[backdrop-filter]:bg-slate-900/80">
           {[
             { id: 'tasks', label: 'Tarefas', icon: ClipboardList },
             { id: 'planning', label: 'Plan', icon: Calendar },
@@ -1445,12 +1441,16 @@ const App: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center gap-1.5 p-2 transition-all duration-300 ${activeTab === tab.id ? 'text-indigo-400' : 'text-slate-500'}`}
+              className={`relative flex flex-col items-center justify-center gap-1 w-16 h-full transition-all duration-300 ${activeTab === tab.id ? 'text-indigo-400' : 'text-slate-500'}`}
             >
-              <div className={`p-1.5 rounded-xl transition-all ${activeTab === tab.id ? 'bg-indigo-600/20 shadow-inner' : ''}`}>
-                <tab.icon size={22} />
+              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-2xl transition-all duration-300 ${activeTab === tab.id ? 'bg-indigo-600/20' : 'bg-transparent'}`} />
+              <div className="relative z-10 transition-transform duration-300 active:scale-90">
+                <tab.icon size={24} strokeWidth={activeTab === tab.id ? 2.5 : 2} className={activeTab === tab.id ? '-translate-y-1' : ''} />
               </div>
-              <span className={`text-[9px] font-bold uppercase tracking-wider ${activeTab === tab.id ? 'opacity-100' : 'opacity-60'}`}>{tab.label}</span>
+              <span className={`relative z-10 text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === tab.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 hidden'
+                }`}>
+                {tab.label}
+              </span>
             </button>
           ))}
         </nav>
